@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="../../" default="default" name="showcase">
+
+  	<target name="default" depends="clean, zip"/>
+  	<target name="dependency" depends="default"/>
+   
+    <property name="appname" value="${ant.project.name}"/>
+    <property name="org" value="EnterMedia, Inc."/>
+	<property name="etc" location="${basedir}/etc"/>
+	
+    <property name="build" location="${basedir}/build"/>
+    <property name="webapp" location="${basedir}/webapp"/>
+	
+	<!-- 
+		========================================================================
+		Anthill build server properties.  These properties will be passed in
+		by anthill when this script is executed on the build server.
+		
+			- "version" is set by the version adapter
+			- "deployDir" is set by anthill.publish.dir
+		========================================================================
+	--> 
+  	<property name="version"  value="7.${env.BUILD_NUMBER}"/>
+  	<property name="deployDir" location="deploy"/>
+  	
+  	<!-- A convenience variable for documentation output -->
+
+	<target name="clean">
+	 <delete dir="${build}"/>
+	</target>
+
+	<target name="zip" >
+		<mkdir dir="${deployDir}"/>
+		<zip destfile="${deployDir}/showcase.zip" >			
+			<zipfileset dir="${basedir}/showcase" prefix="showcase" />
+
+			<zipfileset dir="${etc}/showcase" prefix="etc" includes="install.js" />
+
+		</zip>
+ </target>
+	   <!-- 
+	<target name="publish" depends="zip">
+	 	<copy file="${etc}/showcase/install.js" overwrite="true"
+	        tofile="${deployDir}/install.js"/>
+	 	<copy file="${etc}/install.xml" overwrite="true"
+	        tofile="${deployDir}/install.xml"/>
+	</target>
+	  
+   -->
+  
+ 
+</project>

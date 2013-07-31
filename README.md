@@ -1,4 +1,0 @@
-extension-aws
-=============
-
-Amazon Repository

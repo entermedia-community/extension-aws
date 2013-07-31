@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="default" name="extension-aws">
+
+	<target name="default" depends="clean, zip, publish" />
+	<property name="appname" value="${ant.project.name}" />
+	<property name="base" location="${basedir}/base" />
+	<property name="etc" location="${basedir}/etc" />
+	<property name="build" location="${basedir}/build" />
+	<property name="webapp" location="${basedir}/webapp" />
+	<property name="branch" value="" />
+	<property name="majorversion" value="7" />
+	<property environment="env" />
+	<property name="version" value="${majorversion}.${env.BUILD_NUMBER}" />
+	<property name="deployDir" location="deploy" />
+
+	<!-- A convenience variable for documentation output -->
+	<property name="versionDir" location="${deployDir}/${version}" />
+	<property name="versionedApp" value="${appname}-${version}" />
+
+	<target name="clean">
+		<delete dir="${build}" />
+	</target>
+
+	<!-- Just make a zip file that you unzip on top of your webapp -->
+	<target name="zip">
+		<mkdir dir="${build}" />
+		<zip destfile="${build}/${versionedApp}.zip">
+			<zipfileset dir="${webapp}" />
+		</zip>
+	</target>
+
+
+	<target name="publish" depends="zip">
+
+		<!-- publish results to anthill -->
+		<copy file="${build}/${versionedApp}.zip" overwrite="true" tofile="${deployDir}/${appname}.zip" />
+
+		<copy overwrite="true" file="${etc}/install.js" tofile="${deployDir}/install.js">
+			<filterset>
+				<filter token="BRANCH" value="${branch}" />
+			</filterset>
+		</copy>
+		<copy file="${etc}/install.xml" overwrite="true" tofile="${deployDir}/install.xml">
+			<filterset>
+				<filter token="BRANCH" value="${branch}" />
+			</filterset>
+		</copy>
+	</target>
+</project>
