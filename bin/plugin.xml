@@ -12,21 +12,14 @@ http://www.springframework.org/schema/lang http://www.springframework.org/schema
 <!-- GROOVY Script Version -->
 
 	
-<lang:groovy id="S3Repository" script-source="model/amazon/S3Repository.groovy" lazy-init="default">
-	   	<lang:property name="searcherManager"><ref bean="searcherManager"/></lang:property>
-		<lang:property name="webEventHandler"><ref bean="mediaEventHandler" /></lang:property>
-		<lang:property name="lockManager"><ref bean="lockManager" /></lang:property>
-	</lang:groovy>
+<bean id="S3Repository" class="model.amazon.S3Repository" singleton="false">
+</bean>
 
 <!-- Compiled Class Version
 
-	<bean id="orderManager" class="model.orders.BaseOrderManager">
-	   	<property name="searcherManager"><ref bean="searcherManager"/></property>
-		<property name="webEventHandler"><ref bean="mediaEventHandler" /></property>
-		<property name="lockManager"><ref bean="lockManager" /></property>
+<lang:groovy id="S3Repository" script-source="model/amazon/S3Repository.groovy" singleton="false">
+</lang:groovy>
 
-	</bean>
-	
  -->
  	
 </beans>

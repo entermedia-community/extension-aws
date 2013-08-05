@@ -1,75 +1,81 @@
 package model.amazon;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.openedit.repository.BaseRepository;
 import org.openedit.repository.ContentItem;
 import org.openedit.repository.InputStreamItem;
 import org.openedit.repository.Repository;
 import org.openedit.repository.RepositoryException;
+import org.openedit.repository.filesystem.FileItem;
 
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
 import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.openedit.OpenEditException;
+import com.openedit.util.OutputFiller;
 
-public class S3Repository extends BaseRepository{
+public class S3Repository extends BaseRepository
+{
 
+	private static final Log log = LogFactory.getLog(S3Repository.class);
 	
-	protected String fieldBucket;
 	protected AmazonS3 fieldConnection;
-	protected String fieldSecretKey;
-	protected String fieldAccessKey;
+	public static final String SECRET_KEY = "secretkey";
+	public static final String ACCESS_KEY = "accesskey";
+	public static final String BUCKET = "bucket";
+	protected OutputFiller fieldOutputFiller;
 	
-	public String getSecretKey() {
-		return fieldSecretKey;
+	public String getSecretKey() 
+	{
+		return getProperty(SECRET_KEY);
 	}
 
 	public void setSecretKey(String inSecretKey) {
-		fieldSecretKey = inSecretKey;
+		setProperty(SECRET_KEY,inSecretKey);
+		
 	}
 
 	public String getAccessKey() {
-		return fieldAccessKey;
+		return getProperty(ACCESS_KEY);
 	}
 
 	public void setAccessKey(String inAccessKey) {
-		fieldAccessKey = inAccessKey;
+		setProperty(ACCESS_KEY,inAccessKey);
 	}
 
 	public String getBucket() {
-		return fieldBucket;
+		return getProperty(BUCKET);
 	}
 
 	public void setBucket(String inBucket) {
-		fieldBucket = inBucket;
+		setProperty(BUCKET,inBucket);
 	}
 
+	
 	public AmazonS3 getConnection() {
-		if (fieldConnection == null) {
-			
-			AWSCredentials credentials = new AWSCredentials() {
-				
-				
-				public String getAWSSecretKey() {
-					return getSecretKey();
-				}
-				
-				
-				public String getAWSAccessKeyId() {
-					return getAccessKey();
-				}
-			};
-			
-			
+		if (fieldConnection == null) 
+		{
+			BasicAWSCredentials credentials = new BasicAWSCredentials(getAccessKey(),getSecretKey());
 			fieldConnection = new AmazonS3Client(credentials);
 			if(!fieldConnection.doesBucketExist(getBucket())){
 				fieldConnection.createBucket(getBucket());
@@ -86,19 +92,75 @@ public class S3Repository extends BaseRepository{
 	}
 
 	
-	public ContentItem get(String inPath) throws RepositoryException {
+	public ContentItem get(String inPath) throws RepositoryException 
+	{
 //		String path = inPath.substring(getPath().length());
-//		if (path.length() == 0)
-//		{
-//			path = "/";
-//		} 
-//		
-		S3Object object = getConnection().getObject(new GetObjectRequest(getBucket(), inPath));
+		if (inPath.length() == 0)
+		{
+			inPath = "/";
+		}
+		FileItem item = new FileItem();
+		item.setPath(inPath);
+		String awspath = trimAwsPath(inPath);
+		File cached = new File(getExternalPath() + "/" + awspath);
+		item.setFile( cached );
+		//System.out.println("Content-Type: "  + object.getObjectMetadata().getContentType());
 		
-          System.out.println("Content-Type: "  + object.getObjectMetadata().getContentType());
-          S3ContentItem item = new S3ContentItem();
-          item.setPath(inPath);
-  		item.setAbsolutePath(inPath);
+		boolean save = true;
+		if( item.isFolder() || inPath.endsWith("/") || inPath.endsWith(".xconf") )
+		{
+			return item;
+		}
+//
+		S3Object object = null;
+		try
+		{
+			object = getConnection().getObject(new GetObjectRequest(getBucket(), awspath));
+		}
+		catch(AmazonServiceException ex )
+		{
+			if( ex.getStatusCode()  == 404)
+			{
+				return item;
+			}
+			throw ex;
+		}
+		long filemod = object.getObjectMetadata().getLastModified().getTime();
+		if( cached.exists() )
+		{
+			long oldtime = cached.lastModified();
+			
+			filemod = filemod/1000;
+			oldtime = oldtime/1000;
+			if (filemod == oldtime)
+			{
+				save = false;
+			}
+		}
+		  
+		if( save  )
+		{
+			InputStream input = object.getObjectContent();
+			cached.getParentFile().mkdirs();
+			OutputStream output = null;
+			try
+			{
+				output =  new FileOutputStream(cached);
+				log.info("Caching " + inPath);
+				getOutputFiller().fill( input, output );
+				cached.setLastModified(filemod);
+			}
+			catch( IOException ex)
+			{
+				throw new OpenEditException(ex);
+			}
+			finally
+			{
+				getOutputFiller().close(input);
+				getOutputFiller().close(output);
+			}
+			
+		}
 
   		return item;
           
@@ -106,9 +168,73 @@ public class S3Repository extends BaseRepository{
 	}
 
 	@Override
-	public ContentItem getStub(String inPath) throws RepositoryException {
-		// TODO Auto-generated method stub
-		return null;
+	public ContentItem getStub(String inPath) throws RepositoryException 
+	{
+	    S3ContentItem item = new S3ContentItem();
+		item.setStub(true);
+	    item.setPath(inPath);
+
+		String awspath = trimAwsPath(inPath);
+
+		File cached = new File(getExternalPath() + "/" + awspath);
+		item.folder = cached.isDirectory();
+		
+		if( inPath.endsWith(".xconf") )
+		{
+			FileItem tmpitem = new FileItem();
+			tmpitem.setPath(inPath);
+			tmpitem.setFile( cached );
+			return tmpitem;
+		}
+		
+		if(inPath.endsWith("/") || item.folder || inPath.equals(getPath()) )
+		{
+			item.folder = true;
+			item.existed = true;
+			return item;
+		}
+
+		
+		
+	    item.existed = cached.exists();
+		item.folder = cached.isDirectory();
+		
+		if(inPath.endsWith("/") || item.folder )
+		{
+			item.folder = true;
+		    return item;
+		}
+		try
+		{
+			 ObjectMetadata data = getConnection().getObjectMetadata( new GetObjectMetadataRequest(getBucket(), awspath));
+			 
+			 item.setLastModified(data.getLastModified());
+			 
+			 return item;
+		}
+		catch(AmazonServiceException ex )
+		{
+			if( ex.getStatusCode()  == 404)
+			{
+				item.folder = true;
+				log.info("Must be a folder " + inPath);
+				return item;
+			}
+			throw ex;
+		}
+		//log.info("returned a file path " + inPath);
+		//return item;
+
+	}
+
+	private String trimAwsPath(String inPath)
+	{
+		String awspath = inPath.substring(getPath().length() );
+		if( awspath.startsWith("/"))
+		{
+			awspath = awspath.substring(1);
+		}
+		return awspath;
 	}
 
 	
@@ -116,7 +242,9 @@ public class S3Repository extends BaseRepository{
 	{
 		try
 		{
-			 getConnection().getObjectMetadata(	 new GetObjectMetadataRequest(getBucket(), inPath));
+			String awspath = trimAwsPath(inPath);
+
+			 getConnection().getObjectMetadata(	 new GetObjectMetadataRequest(getBucket(), awspath));
 			 return true;
 		}
 		catch(AmazonServiceException ex )
@@ -131,9 +259,34 @@ public class S3Repository extends BaseRepository{
 
 	
 	public void put(ContentItem inContent) throws RepositoryException {
-		File file = new File(inContent.getAbsolutePath());
-		String path = inContent.getPath();
-		getConnection().putObject(new PutObjectRequest(getBucket(), inContent.getPath(), file));
+		
+		//Should I save a copy to the local cache sure?
+		String awspath = trimAwsPath(inContent.getPath());
+		String root = getExternalPath() + "/" + awspath;
+		
+		File cached = new File(root);
+
+		InputStream input = inContent.getInputStream();
+		cached.getParentFile().mkdirs();
+		OutputStream output = null;
+		try
+		{
+			output = new FileOutputStream(cached);
+			log.info("Saving " + awspath);
+			getOutputFiller().fill( input, output );
+		}
+		catch( IOException ex)
+		{
+			throw new OpenEditException(ex);
+		}
+		finally
+		{
+			getOutputFiller().close(input);
+			getOutputFiller().close(output);
+		}
+		
+		PutObjectRequest req = new PutObjectRequest(getBucket(), awspath, cached);
+		getConnection().putObject(req);
 		
 	}
 
@@ -176,8 +329,62 @@ public class S3Repository extends BaseRepository{
 	@Override
 	public List getChildrenNames(String inParent) throws RepositoryException 
 	{
-		//getConnection().
-		return null;
+		try
+		{
+			if( inParent.startsWith("/"))
+			{
+				inParent = inParent.substring(1);
+			}
+			if(inParent.length() > 0 && !inParent.endsWith("/"))
+			{
+				inParent = inParent + "/";
+			}
+			
+			AmazonS3 s3 = getConnection();
+			ObjectListing current = s3.listObjects(new ListObjectsRequest()
+            .withBucketName(getBucket())
+            .withPrefix(inParent)
+			.withDelimiter("/")
+            );
+
+			//These are the subfolders = 
+			List paths = new ArrayList();
+			
+			List<S3ObjectSummary> keyList = current.getObjectSummaries();
+			ObjectListing nextbatch = s3.listNextBatchOfObjects(current);
+			keyList.addAll(nextbatch.getObjectSummaries());
+			for( String path :  current.getCommonPrefixes())
+			{
+				paths.add( getPath() + "/" + path );
+			}
+
+			
+			while (nextbatch.isTruncated()) {
+			   current=s3.listNextBatchOfObjects(nextbatch);
+			   keyList.addAll(current.getObjectSummaries());
+			   nextbatch =s3.listNextBatchOfObjects(current);
+				for( String path :  current.getCommonPrefixes())
+				{
+					paths.add(getPath() +  "/" +  path );						
+				}
+			}
+			keyList.addAll(nextbatch.getObjectSummaries());
+
+			for( S3ObjectSummary summary :  keyList)
+			{
+				String path = summary.getKey();
+				if( !inParent.equals(path))
+				{
+					paths.add( getPath() + "/" +  path );
+				}
+				
+			}
+			return paths;
+		}
+		catch(AmazonServiceException ex )
+		{
+			throw ex;
+		}
 	}
 
 	@Override
@@ -190,34 +397,49 @@ public class S3Repository extends BaseRepository{
 	class S3ContentItem extends InputStreamItem
 	{
 		protected Boolean existed;
-
+		protected Boolean folder;
+		
 		public InputStream getInputStream() throws RepositoryException
 		{
-			 S3Object object = getConnection().getObject(new GetObjectRequest(getBucket(), getPath()));
-			 return object.getObjectContent();
+			// S3Object object = getConnection().getObject(new GetObjectRequest(getBucket(), getPath()));
+			// return object.getObjectContent();
+			//TODO: Call the normal get( method
+			return null;
 		}
 
 		public boolean exists()
 		{
-			 S3Object object = getConnection().getObject(new GetObjectRequest(getBucket(), getPath()));
-			 
-			 return (object == null); //no idea if this is correct.
+			return existed;
 		}
 
 		public boolean isFolder()
 		{
-			if (getAbsolutePath().endsWith("/"))
+			if (folder || getPath().endsWith("/"))
 			{
 				return true;
 			}
 			return false;
 		}
 
+		public void setLastModified(Date inDate)
+		{
+			fieldLastModified = inDate;
+		}
+		
 	}
 
 
 	public URL getPresignedURL(String inString, Date expiration) {
 		return getConnection().generatePresignedUrl(getBucket(), inString, expiration);
+	}
+	
+	protected OutputFiller getOutputFiller()
+	{
+		if( fieldOutputFiller == null)
+		{
+			fieldOutputFiller = new OutputFiller();
+		}
+		return fieldOutputFiller;
 	}
 }
 

@@ -18,7 +18,7 @@ public class amazonpublisher extends basepublisher implements Publisher
 
 	public PublishResult publish(MediaArchive mediaArchive,Asset asset, Data inPublishRequest,  Data destination, Data inPreset)
 	{
-		S3Repository repo = (S3Repository)mediaArchive.getModuleManager().getBean("S3Repository");
+		S3RepositoryTest repo = (S3RepositoryTest)mediaArchive.getModuleManager().getBean("S3Repository");
 		log.info("Publish asset to Amazon ${asset} for on server: ${destination}" );
 
 		repo.setBucket(destination.bucket);
