@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project basedir="../../" default="default" name="showcase">
+<project basedir="../" default="default" name="extension-aws">
 
   	<target name="default" depends="clean, zip"/>
   	<target name="dependency" depends="default"/>
@@ -10,7 +10,9 @@
 	
     <property name="build" location="${basedir}/build"/>
     <property name="webapp" location="${basedir}/webapp"/>
-	
+
+    <property name="base" location="${basedir}/webapp/WEB-INF/base"/>
+
 	<!-- 
 		========================================================================
 		Anthill build server properties.  These properties will be passed in
@@ -20,8 +22,8 @@
 			- "deployDir" is set by anthill.publish.dir
 		========================================================================
 	--> 
-  	<property name="version"  value="7.${env.BUILD_NUMBER}"/>
-  	<property name="deployDir" location="deploy"/>
+  	<property name="version"  value="8.${env.BUILD_NUMBER}"/>
+  	<property name="deployDir" location="${basedir}/deploy"/>
   	
   	<!-- A convenience variable for documentation output -->
 
@@ -31,22 +33,11 @@
 
 	<target name="zip" >
 		<mkdir dir="${deployDir}"/>
-		<zip destfile="${deployDir}/showcase.zip" >			
-			<zipfileset dir="${basedir}/showcase" prefix="showcase" />
-
-			<zipfileset dir="${etc}/showcase" prefix="etc" includes="install.js" />
-
+		<zip destfile="${deployDir}/${appname}.zip" >			
+			<zipfileset dir="${base}/aws" prefix="WEB-INF/base/aws" />
+			<zipfileset dir="${basedir}/installer" prefix="etc" includes="install.js" />
 		</zip>
  </target>
-	   <!-- 
-	<target name="publish" depends="zip">
-	 	<copy file="${etc}/showcase/install.js" overwrite="true"
-	        tofile="${deployDir}/install.js"/>
-	 	<copy file="${etc}/install.xml" overwrite="true"
-	        tofile="${deployDir}/install.xml"/>
-	</target>
-	  
-   -->
   
  
 </project>
