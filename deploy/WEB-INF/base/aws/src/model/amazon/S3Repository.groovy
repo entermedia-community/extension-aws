@@ -80,7 +80,6 @@ public class S3Repository extends BaseRepository
 			if(!fieldConnection.doesBucketExist(getBucket())){
 				fieldConnection.createBucket(getBucket());
 			}
-			log.info("Connected to S3 " + getBucket() );
 		}
 
 		return fieldConnection;
@@ -100,27 +99,15 @@ public class S3Repository extends BaseRepository
 		{
 			inPath = "/";
 		}
-		S3ContentItem item = new S3ContentItem();
+		FileItem item = new FileItem();
 		item.setPath(inPath);
 		String awspath = trimAwsPath(inPath);
 		File cached = new File(getExternalPath() + "/" + awspath);
-		if( awspath.isEmpty() && !cached.exists() )
-		{
-			cached.mkdirs();
-		}
 		item.setFile( cached );
-		if( inPath.endsWith(".xconf") )
-		{
-			item.existed = false;
-			return item;
-		}
-		//Defaults
-		item.existed = true; //Is this cool?
-		item.folder = true; //Is this cool?
-
 		//System.out.println("Content-Type: "  + object.getObjectMetadata().getContentType());
+		
 		boolean save = true;
-		if( inPath.endsWith("/") || awspath.isEmpty() || cached.isDirectory() )
+		if( item.isFolder() || inPath.endsWith("/") || inPath.endsWith(".xconf") )
 		{
 			return item;
 		}
@@ -134,29 +121,20 @@ public class S3Repository extends BaseRepository
 		{
 			if( ex.getStatusCode()  == 404)
 			{
-				//Might be a folder, dumb api
 				return item;
 			}
 			throw ex;
 		}
-		
-		item.folder = false;
-		
-		Date last = object.getObjectMetadata().getLastModified();
-		long filemod = 0;
-		if( last != null)
+		long filemod = object.getObjectMetadata().getLastModified().getTime();
+		if( cached.exists() )
 		{
-			filemod = last.getTime();
-			if( cached.exists() )
+			long oldtime = cached.lastModified();
+			
+			filemod = filemod/1000;
+			oldtime = oldtime/1000;
+			if (filemod == oldtime)
 			{
-				long oldtime = cached.lastModified();
-				
-				filemod = filemod/1000;
-				oldtime = oldtime/1000;
-				if (filemod == oldtime)
-				{
-					save = false;
-				}
+				save = false;
 			}
 		}
 		  
@@ -170,10 +148,7 @@ public class S3Repository extends BaseRepository
 				output =  new FileOutputStream(cached);
 				log.info("Caching " + inPath);
 				getOutputFiller().fill( input, output );
-				if( filemod > 0)
-				{
-					cached.setLastModified(filemod);
-				}
+				cached.setLastModified(filemod);
 			}
 			catch( IOException ex)
 			{
@@ -200,44 +175,40 @@ public class S3Repository extends BaseRepository
 	    item.setPath(inPath);
 
 		String awspath = trimAwsPath(inPath);
+
 		File cached = new File(getExternalPath() + "/" + awspath);
-		item.setFile(cached);
-		if( awspath.isEmpty() && !cached.exists() )
-		{
-			cached.mkdirs();
-		}		
+		item.folder = cached.isDirectory();
+		
 		if( inPath.endsWith(".xconf") )
 		{
-			S3ContentItem tmpitem = new S3ContentItem();
+			FileItem tmpitem = new FileItem();
 			tmpitem.setPath(inPath);
 			tmpitem.setFile( cached );
-			tmpitem.existed = false;
 			return tmpitem;
 		}
-		//Defaults
-		item.folder = true;
-		item.existed = true;
 		
-		if(inPath.endsWith("/") || inPath.equals(getPath()) ||  cached.isDirectory() )
+		if(inPath.endsWith("/") || item.folder || inPath.equals(getPath()) )
 		{
+			item.folder = true;
+			item.existed = true;
 			return item;
 		}
+
 		
+		
+	    item.existed = cached.exists();
+		item.folder = cached.isDirectory();
+		
+		if(inPath.endsWith("/") || item.folder )
+		{
+			item.folder = true;
+		    return item;
+		}
 		try
 		{
-			//not sure if it is a directory or not
 			 ObjectMetadata data = getConnection().getObjectMetadata( new GetObjectMetadataRequest(getBucket(), awspath));
-
-			 if( data.getLastModified() == null)
-			 {
-				 return item; //Must have been a folder
-			 }
-			 else
-			 {
-				 item.folder = false;
-				 item.setLastModified(data.getLastModified());
-				 item.length = data.getContentLength();
-			 }
+			 
+			 item.setLastModified(data.getLastModified());
 			 
 			 return item;
 		}
@@ -245,9 +216,8 @@ public class S3Repository extends BaseRepository
 		{
 			if( ex.getStatusCode()  == 404)
 			{
-				item.folder = false;
-				item.existed = false;
-				log.info("Missing " + inPath);
+				item.folder = true;
+				log.info("Must be a folder " + inPath);
 				return item;
 			}
 			throw ex;
@@ -272,14 +242,6 @@ public class S3Repository extends BaseRepository
 	{
 		try
 		{
-			if( inPath.equals(getPath()))
-			{
-				return true;
-			}
-			if( inPath.endsWith(".xconf"))
-			{
-				return false;
-			}
 			String awspath = trimAwsPath(inPath);
 
 			 getConnection().getObjectMetadata(	 new GetObjectMetadataRequest(getBucket(), awspath));
@@ -369,17 +331,19 @@ public class S3Repository extends BaseRepository
 	{
 		try
 		{
-			String parentpath = inParent;
-			if(parentpath.length() > 0 && !parentpath.endsWith("/"))
+			if( inParent.startsWith("/"))
 			{
-				parentpath = parentpath + "/";
+				inParent = inParent.substring(1);
+			}
+			if(inParent.length() > 0 && !inParent.endsWith("/"))
+			{
+				inParent = inParent + "/";
 			}
 			
-			String awspath = trimAwsPath(parentpath);
 			AmazonS3 s3 = getConnection();
 			ObjectListing current = s3.listObjects(new ListObjectsRequest()
             .withBucketName(getBucket())
-            .withPrefix(awspath)
+            .withPrefix(inParent)
 			.withDelimiter("/")
             );
 
@@ -409,7 +373,7 @@ public class S3Repository extends BaseRepository
 			for( S3ObjectSummary summary :  keyList)
 			{
 				String path = summary.getKey();
-				if( !awspath.equals(path)) //Why is the parent included?
+				if( !inParent.equals(path))
 				{
 					paths.add( getPath() + "/" +  path );
 				}
@@ -430,46 +394,27 @@ public class S3Repository extends BaseRepository
 	}
 
 	
-	class S3ContentItem extends FileItem
+	class S3ContentItem extends InputStreamItem
 	{
 		protected Boolean existed;
 		protected Boolean folder;
-		protected long length;
 		
-		@Override
-		public long getLength()
+		public InputStream getInputStream() throws RepositoryException
 		{
-			if( length > 0)
-			{
-				return length;
-			}
-			return super.getLength();
+			// S3Object object = getConnection().getObject(new GetObjectRequest(getBucket(), getPath()));
+			// return object.getObjectContent();
+			//TODO: Call the normal get( method
+			return null;
 		}
-		
+
 		public boolean exists()
 		{
-			if( existed != null)
-			{
-				return existed;
-			}
-			if( getFile() != null)
-			{
-				return getFile().exists();
-			}
-			return true;
+			return existed;
 		}
 
 		public boolean isFolder()
 		{
-			if( folder != null)
-			{
-				return folder;
-			}
-			if( getFile() != null)
-			{
-				return getFile().isDirectory();
-			}
-			if (getPath().endsWith("/"))
+			if (folder || getPath().endsWith("/"))
 			{
 				return true;
 			}
@@ -479,11 +424,6 @@ public class S3Repository extends BaseRepository
 		public void setLastModified(Date inDate)
 		{
 			fieldLastModified = inDate;
-		}
-		
-		public String toString()
-		{
-			return getName();
 		}
 		
 	}
