@@ -3,7 +3,7 @@ importPackage( Packages.java.util );
 importPackage( Packages.java.lang );
 importPackage( Packages.com.openedit.modules.update );
 
-var name = "extension-avconv";
+var name = "extension-aws";
 
 var war = "http://dev.entermediasoftware.com/jenkins/job/@BRANCH@" + name + "/lastSuccessfulBuild/artifact/deploy/" + name + ".zip";
 
