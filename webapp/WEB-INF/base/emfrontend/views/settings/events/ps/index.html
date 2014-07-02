@@ -36,7 +36,11 @@
 				#end </td>
 				<td> #if( $event.getPeriod() > 0 )
 				[[repeats every]] $event.getFormattedPeriod()
-				#end </td>
+				#end 
+				#if( $runner.isRepeating() )
+				[[Is Repeating]]
+				#end 
+				</td>
 			</tr>
 			#end
 		</tbody>
