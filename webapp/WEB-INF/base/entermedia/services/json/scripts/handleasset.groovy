@@ -38,6 +38,7 @@ public void handleAssetRequest(){
 
 	if(object != null){
 		
+		//This is not a good idea. We should stream the output direct to the browser not load up a string
 		try
 		{
 			OutputFiller filler = new OutputFiller();
@@ -130,7 +131,7 @@ public JSONObject handlePost(){
 
 	if(asset == null && keys.get("localPath") != null)
 	{
-		log.info("HERE!!!");
+		//log.info("HERE!!!");
 		File file = new File(keys.get("localPath"));
 		if(file.exists())
 		{
@@ -297,6 +298,7 @@ public MediaArchive getMediaArchive(String inCatalogid)
 
 public JSONObject getAssetJson(Searcher inSearcher, Data inAsset){
 
+	//TODO: Use a view to limit what is returned
 	JSONObject asset = new JSONObject();
 	inSearcher.getPropertyDetails().each{
 		String key = it.id;

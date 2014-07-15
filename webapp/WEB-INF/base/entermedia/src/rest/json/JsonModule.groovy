@@ -401,10 +401,7 @@ public class JsonModule extends BaseMediaModule
 
 	}
 
-
-
-
-
+	//this is not needed see parent class
 	public MediaArchive getMediaArchive(WebPageRequest inReq,  String inCatalogid)
 	{
 		SearcherManager sm = inReq.getPageValue("searcherManager");
@@ -427,7 +424,7 @@ public class JsonModule extends BaseMediaModule
 			String value=inAsset.get(it.id);
 			if(key && value)
 			{
-				if(detail.isMultiValue())
+				if(detail.isMultiValue() || key =="category")
 				{
 					List values = inAsset.getValues(key);
 					JSONArray items = new JSONArray();
