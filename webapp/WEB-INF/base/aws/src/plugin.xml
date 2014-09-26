@@ -14,7 +14,17 @@ http://www.springframework.org/schema/lang http://www.springframework.org/schema
 <lang:groovy id="S3Repository" script-source="model/amazon/S3Repository.groovy" singleton="false">
 </lang:groovy>
 
-	
+<!-- 
+Configure the repo in oemounts.xml
+
+<lang:groovy id="S3NewsCorpRepository" script-source="model/amazon/S3Repository.groovy" singleton="false">
+
+<lang:property name="accessKey"><value>AKIAJNQ3JL3ANXXX</value></lang:property>
+<lang:property name="secretKey"><value>7XXXXZ7fkHKssXXX</value></lang:property>
+<lang:property name="bucket"><value>videomam.news.com.au</value></lang:property>
+
+</lang:groovy>
+ -->	
 
 <!-- Compiled Class Version
 

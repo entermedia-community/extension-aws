@@ -1,17 +1,11 @@
 package publishing.publishers;
 
-import model.amazon.*
-
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
-import org.openedit.Data
-import org.openedit.data.*
-import org.openedit.entermedia.Asset
-import org.openedit.entermedia.MediaArchive
-import org.openedit.entermedia.publishing.*
-import org.openedit.repository.filesystem.StringItem
-
-import com.openedit.page.Page
+import org.apache.commons.logging.Log;
+import org.openedit.Data;
+import org.openedit.entermedia.Asset;
+import org.openedit.entermedia.MediaArchive;
+import org.openedit.entermedia.publishing.PublishResult;
+import org.openedit.entermedia.publishing.Publisher;
 
 public class amazonpublisher extends basepublisher implements Publisher 
 {

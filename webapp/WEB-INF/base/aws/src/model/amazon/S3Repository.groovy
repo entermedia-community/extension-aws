@@ -1,40 +1,35 @@
 package model.amazon;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import javax.mail.internet.CachedDataHandler;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.openedit.repository.BaseRepository;
-import org.openedit.repository.ContentItem;
-import org.openedit.repository.InputStreamItem;
-import org.openedit.repository.Repository;
-import org.openedit.repository.RepositoryException;
-import org.openedit.repository.filesystem.FileItem;
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
+import org.openedit.repository.BaseRepository
+import org.openedit.repository.ContentItem
+import org.openedit.repository.Repository
+import org.openedit.repository.RepositoryException
+import org.openedit.repository.filesystem.FileItem
+import org.openedit.repository.filesystem.FileRepository;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.openedit.OpenEditException;
-import com.openedit.util.OutputFiller;
+import com.amazonaws.AmazonServiceException
+import com.amazonaws.ClientConfiguration
+import com.amazonaws.Protocol
+import com.amazonaws.auth.BasicAWSCredentials
+import com.amazonaws.services.s3.AmazonS3
+import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.model.GetObjectMetadataRequest
+import com.amazonaws.services.s3.model.GetObjectRequest
+import com.amazonaws.services.s3.model.ListObjectsRequest
+import com.amazonaws.services.s3.model.ObjectListing
+import com.amazonaws.services.s3.model.ObjectMetadata
+import com.amazonaws.services.s3.model.PutObjectRequest
+import com.amazonaws.services.s3.model.PutObjectResult;
+import com.amazonaws.services.s3.model.S3Object
+import com.amazonaws.services.s3.model.S3ObjectSummary
+import com.openedit.OpenEditException
+import com.openedit.util.OutputFiller
 
-public class S3Repository extends BaseRepository
+public class S3Repository extends FileRepository
 {
 
 	private static final Log log = LogFactory.getLog(S3Repository.class);
@@ -75,8 +70,25 @@ public class S3Repository extends BaseRepository
 	public AmazonS3 getConnection() {
 		if (fieldConnection == null) 
 		{
-			BasicAWSCredentials credentials = new BasicAWSCredentials(getAccessKey(),getSecretKey());
-			fieldConnection = new AmazonS3Client(credentials);
+			//BasicAWSCredentials credentials = new BasicAWSCredentials(getAccessKey(),getSecretKey());
+			
+			
+			BasicAWSCredentials basicCred = new BasicAWSCredentials(getAccessKey(),getSecretKey());
+			
+			ClientConfiguration clientCfg = new ClientConfiguration();
+			clientCfg.setProtocol(Protocol.HTTPS);
+		
+			String proxy = System.getProperty("http.proxyHost");
+			if( proxy != null)
+			{
+				clientCfg.setProxyHost(proxy);
+				String port = System.getProperty("http.proxyPort");
+				clientCfg.setProxyPort(Integer.valueOf(port));
+			}
+		
+			fieldConnection = new AmazonS3Client(basicCred, clientCfg);
+			
+			//fieldConnection = new AmazonS3Client(credentials);
 			if(!fieldConnection.doesBucketExist(getBucket())){
 				fieldConnection.createBucket(getBucket());
 			}
@@ -160,7 +172,7 @@ public class S3Repository extends BaseRepository
 			}
 		}
 		  
-		if( save  )
+		if( save  ) //S3 tracks the time a file was uploaded, not the original time stamp
 		{
 			InputStream input = object.getObjectContent();
 			cached.getParentFile().mkdirs();
@@ -168,7 +180,7 @@ public class S3Repository extends BaseRepository
 			try
 			{
 				output =  new FileOutputStream(cached);
-				log.info("Caching " + inPath);
+				log.info("Downloading from S3 to cache " + inPath);
 				getOutputFiller().fill( input, output );
 				if( filemod > 0)
 				{
@@ -247,7 +259,7 @@ public class S3Repository extends BaseRepository
 			{
 				item.folder = false;
 				item.existed = false;
-				log.info("Missing " + inPath);
+				log.info("S3 Missing this path " + inPath);
 				return item;
 			}
 			throw ex;
@@ -282,6 +294,11 @@ public class S3Repository extends BaseRepository
 			}
 			String awspath = trimAwsPath(inPath);
 
+			if( new File(getExternalPath() + "/" + awspath).exists() )
+			{
+				return true;
+			}
+			
 			 getConnection().getObjectMetadata(	 new GetObjectMetadataRequest(getBucket(), awspath));
 			 return true;
 		}
@@ -295,6 +312,42 @@ public class S3Repository extends BaseRepository
 		}
 	}
 
+	public void move(ContentItem inSource,ContentItem inDest) throws RepositoryException 
+	{
+		if( inSource instanceof S3ContentItem)
+		{
+			//move using their API
+			throw new RepositoryException("Repo moves not supported");
+		}
+		String awspath = trimAwsPath(inDest.getPath());
+		String root = getExternalPath() + "/" + awspath;
+		
+		File source = new File(inSource.getAbsolutePath());
+		File destination = new File(root);
+		
+		
+		if ( !source.renameTo(root))
+		{
+			getFileUtils().copyFiles( source, destination );
+			getFileUtils().deleteAll(source);
+		}
+		log.info("Moved cache file to s3 " +awspath);
+		//PutObjectRequest req = new PutObjectRequest(getBucket(), awspath, destination);
+		getConnection().putObject(getBucket(), awspath, destination);
+		
+		ObjectMetadata data = getConnection().getObjectMetadata( new GetObjectMetadataRequest(getBucket(), awspath));
+		 if( data.getLastModified() != null)
+		 {
+			 destination.setLastModified(data.getLastModified().getTime());
+		 }
+		 if( inDest instanceof S3ContentItem)
+		 {
+			 S3ContentItem ci = (S3ContentItem)inDest;
+			 ci.existed = null;
+			 ci.folder = null;
+			 ci.setFile(destination);
+		 }
+	}
 	
 	public void put(ContentItem inContent) throws RepositoryException {
 		
@@ -310,7 +363,7 @@ public class S3Repository extends BaseRepository
 		try
 		{
 			output = new FileOutputStream(cached);
-			log.info("Saving " + awspath);
+			log.info("Saving Local file to cache " + awspath);
 			getOutputFiller().fill( input, output );
 		}
 		catch( IOException ex)
@@ -323,27 +376,58 @@ public class S3Repository extends BaseRepository
 			getOutputFiller().close(output);
 		}
 		
-		PutObjectRequest req = new PutObjectRequest(getBucket(), awspath, cached);
-		getConnection().putObject(req);
+		///PutObjectRequest req = new PutObjectRequest(getBucket(), awspath, cached);
+		getConnection().putObject(getBucket(), awspath, cached);
+		log.info("Uploaded from cache to S3" + awspath);
+		
+		ObjectMetadata data = getConnection().getObjectMetadata( new GetObjectMetadataRequest(getBucket(), awspath));
+		if( data.getLastModified() != null)
+		{
+			cached.setLastModified(data.getLastModified().getTime());
+		}
 		
 	}
 
 	@Override
-	public void copy(ContentItem inSource, ContentItem inDestination) throws RepositoryException {
-		// TODO Auto-generated method stub
+	public void copy(ContentItem inSource, ContentItem inDest) throws RepositoryException {
+		
+		if( inSource instanceof S3ContentItem)
+		{
+			//move using their API
+			throw new RepositoryException("Repo moves not supported");
+		}
+		String awspath = trimAwsPath(inDest.getPath());
+		String root = getExternalPath() + "/" + awspath;
+		
+		File source = new File(inSource.getAbsolutePath());
+		File destination = new File(root);
+		
+		getFileUtils().copyFiles( source, destination );
+		log.info("Copy to cache file " +awspath);
+		//PutObjectRequest req = new PutObjectRequest(getBucket(), awspath, destination);
+		getConnection().putObject(getBucket(), awspath, destination);
+		
+		ObjectMetadata data = getConnection().getObjectMetadata( new GetObjectMetadataRequest(getBucket(), awspath));
+		 if( data.getLastModified() != null)
+		 {
+			 destination.setLastModified(data.getLastModified().getTime());
+		 }
+		 if( inDest instanceof S3ContentItem)
+		 {
+			 S3ContentItem ci = (S3ContentItem)inDest;
+			 ci.existed = null;
+			 ci.folder = null;
+			 ci.setFile(destination);
+		 }
 		
 	}
 
-	@Override
-	public void move(ContentItem inSource, ContentItem inDestination) throws RepositoryException {
-		// TODO Auto-generated method stub
-		
-	}
 
 	@Override
 	public void move(ContentItem inSource, Repository inSourceRepository, ContentItem inDestination) throws RepositoryException {
 		// TODO Auto-generated method stub
-		
+		//throw new RepositoryException("  not supported");
+		move(inSource,inDestination);
 	}
 
 	

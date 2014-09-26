@@ -1,6 +1,5 @@
 package model.amazon;
 
-import java.util.Calendar;
 import java.util.List;
 
 import org.openedit.entermedia.BaseEnterMediaTest;
@@ -17,19 +16,37 @@ public class S3RepositoryTest extends BaseEnterMediaTest
 	{
 		//MediaArchive archive = getMediaArchive();
 
+//		
+//		X509TrustManager tm = new X509TrustManager() {
+//			 
+//			public void checkClientTrusted(X509Certificate[] xcs, String string) throws CertificateException {
+//			}
+//			 
+//			public void checkServerTrusted(X509Certificate[] xcs, String string) throws CertificateException {
+//			}
+//			 
+//			public X509Certificate[] getAcceptedIssuers() {
+//			return null;
+//			}
+//			};
+		
 		//Object obj = archive.getModuleManager().getBean(archive.getCatalogId(), "S3Repository");;
 //		System.out.println( obj.class );
 //		System.out.println( S3Repository.getClass() );
 //		
+		
+//		 <property name="accesskey">AKIAJ3I5YRDDGXXX</property>
+//		  <property name="secretkey">XD1CeXAhP5imBp3wvRKVUUz3xYnVqpiXXX</property>
+		
+		
 //		Repository brepo = (Repository)obj;
 		S3Repository repo =  new S3Repository(); 
 		//repo.setRoot(getRoot());
 		repo.setExternalPath(getRoot().getAbsolutePath() + "/WEB-INF/s3cache" );
 		repo.setPath("/WEB-INF/data/test/originals/bucket1");
 		repo.setBucket("entermedia_test");
-		repo.setAccessKey("18QVEMSV7G0J0SYHV602");
-		repo.setSecretKey("lQjFuUS77WJDmWqwMjBRUlgTy6TjqsqAjRlbuxN3");
-		
+		repo.setAccessKey("AKIAJ3I5YRDDG6XXXX");
+		repo.setSecretKey("XD1CeXAhP5imBp3wvRKVUUz3xYnVXXX");
 		
 		//18QVEMSV7G0J0SYHV602   Access KEY
 		//lQjFuUS77WJDmWqwMjBRUlgTy6TjqsqAjRlbuxN3  Secret Key
@@ -71,11 +88,20 @@ public class S3RepositoryTest extends BaseEnterMediaTest
 		assertTrue( testfile.exists() );
 		S3Repository repo = getRepo();
 
+		
+		
 		ContentItem itemsave = testfile.getContentItem();
 		itemsave.setPath("/WEB-INF/data/test/originals/bucket1/sub1/sub2/server.png");
 		repo.put(itemsave);
 
-		ContentItem i = repo.get("/WEB-INF/data/test/originals/bucket1/sub1/sub2/server-rack-cabinet-md.png");
+		ContentItem i = repo.get("/WEB-INF/data/test/originals/bucket1/sub1/sub2/server-rack-cabinet-mdMOVED.png");
+		
+		Page testfilecopy = archive.getPageManager().getPage("/WEB-INF/server_copy.png");
+		archive.getPageManager().copyPage(testfile,testfilecopy);
+		repo.move(testfilecopy.getContentItem(), i);
+
+		i = repo.get("/WEB-INF/data/test/originals/bucket1/sub1/sub2/server-rack-cabinet-md.png");
+
 		assertNotNull(i);
 		assertTrue(i.exists());
 		assertTrue(i.getInputStream().available() > 0 );
