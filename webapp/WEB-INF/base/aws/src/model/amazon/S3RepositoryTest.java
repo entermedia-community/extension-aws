@@ -35,8 +35,6 @@ public class S3RepositoryTest extends BaseEnterMediaTest
 //		System.out.println( S3Repository.getClass() );
 //		
 		
-//		 <property name="accesskey">AKIAJ3I5YRDDGXXX</property>
-//		  <property name="secretkey">XD1CeXAhP5imBp3wvRKVUUz3xYnVqpiXXX</property>
 		
 		
 //		Repository brepo = (Repository)obj;
@@ -44,12 +42,10 @@ public class S3RepositoryTest extends BaseEnterMediaTest
 		//repo.setRoot(getRoot());
 		repo.setExternalPath(getRoot().getAbsolutePath() + "/WEB-INF/s3cache" );
 		repo.setPath("/WEB-INF/data/test/originals/bucket1");
-		repo.setBucket("entermedia_test");
-		repo.setAccessKey("AKIAJ3I5YRDDG6XXXX");
-		repo.setSecretKey("XD1CeXAhP5imBp3wvRKVUUz3xYnVXXX");
+		repo.setBucket("entermedia-test2");
+		repo.setAccessKey("AKIAIQLUUB4Q5ELXXX");
+		repo.setSecretKey("WE/JYEIiJ3cgPsRYGqNbNPPno6M2UWI/XXXX");
 		
-		//18QVEMSV7G0J0SYHV602   Access KEY
-		//lQjFuUS77WJDmWqwMjBRUlgTy6TjqsqAjRlbuxN3  Secret Key
 		
 		return repo;
 	}
@@ -100,21 +96,21 @@ public class S3RepositoryTest extends BaseEnterMediaTest
 		archive.getPageManager().copyPage(testfile,testfilecopy);
 		repo.move(testfilecopy.getContentItem(), i);
 
-		i = repo.get("/WEB-INF/data/test/originals/bucket1/sub1/sub2/server-rack-cabinet-md.png");
-
-		assertNotNull(i);
-		assertTrue(i.exists());
-		assertTrue(i.getInputStream().available() > 0 );
+//		i = repo.get("/WEB-INF/data/test/originals/bucket1/sub1/sub2/server-rack-cabinet-md.png");
+//
+//		assertNotNull(i);
+//		assertTrue(i.exists());
+		//assertTrue(i.getInputStream().available() > 0 );
 	
 
-		ContentItem stub = repo.getStub("/WEB-INF/data/test/originals/bucket1/sub1/sub2/server-rack-cabinet-md.png");
+		ContentItem stub = repo.getStub("/WEB-INF/data/test/originals/bucket1/sub1/sub2/server-rack-cabinet-mdMOVED.png");
 		assertNotNull(stub);
 		assertTrue(stub.exists());
 		assertFalse(stub.isFolder());
 		assertTrue(stub.getLastModified() > 0 );
 		
 		
-		String path = i.getAbsolutePath();
+		String path = stub.getAbsolutePath();
 		assertTrue( path.contains("/WEB-INF/s3cache/"));
 //		URL url = getRepo().getPresignedURL("/clients/embed/index.html", now.getTime());
 //		assertNotNull(url);

@@ -4,6 +4,7 @@ import javax.mail.internet.CachedDataHandler;
 
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.openedit.repository.BaseRepository
 import org.openedit.repository.ContentItem
 import org.openedit.repository.Repository
@@ -94,7 +95,7 @@ public class S3Repository extends FileRepository
 			}
 			log.info("Connected to S3 " + getBucket() );
 		}
-
+		//fieldConnection.
 		return fieldConnection;
 		
 		
@@ -151,54 +152,59 @@ public class S3Repository extends FileRepository
 			}
 			throw ex;
 		}
-		
-		item.folder = false;
-		
-		Date last = object.getObjectMetadata().getLastModified();
-		long filemod = 0;
-		if( last != null)
+		try
 		{
-			filemod = last.getTime();
-			if( cached.exists() )
-			{
-				long oldtime = cached.lastModified();
-				
-				filemod = filemod/1000;
-				oldtime = oldtime/1000;
-				if (filemod == oldtime)
-				{
-					save = false;
-				}
-			}
-		}
-		  
-		if( save  ) //S3 tracks the time a file was uploaded, not the original time stamp
-		{
-			InputStream input = object.getObjectContent();
-			cached.getParentFile().mkdirs();
-			OutputStream output = null;
-			try
-			{
-				output =  new FileOutputStream(cached);
-				log.info("Downloading from S3 to cache " + inPath);
-				getOutputFiller().fill( input, output );
-				if( filemod > 0)
-				{
-					cached.setLastModified(filemod);
-				}
-			}
-			catch( IOException ex)
-			{
-				throw new OpenEditException(ex);
-			}
-			finally
-			{
-				getOutputFiller().close(input);
-				getOutputFiller().close(output);
-			}
+			item.folder = false;
 			
+			Date last = object.getObjectMetadata().getLastModified();
+			long filemod = 0;
+			if( last != null)
+			{
+				filemod = last.getTime();
+				if( cached.exists() )
+				{
+					long oldtime = cached.lastModified();
+					
+					filemod = filemod/1000;
+					oldtime = oldtime/1000;
+					if (filemod == oldtime)
+					{
+						save = false;
+					}
+				}
+			}
+			  
+			if( save  ) //S3 tracks the time a file was uploaded, not the original time stamp
+			{
+				InputStream input = object.getObjectContent();
+				cached.getParentFile().mkdirs();
+				OutputStream output = null;
+				try
+				{
+					output =  new FileOutputStream(cached);
+					log.info("Downloading from S3 to cache " + inPath);
+					getOutputFiller().fill( input, output );
+					if( filemod > 0)
+					{
+						cached.setLastModified(filemod);
+					}
+				}
+				catch( IOException ex)
+				{
+					throw new OpenEditException(ex);
+				}
+				finally
+				{
+					getOutputFiller().close(input);
+					getOutputFiller().close(output);
+				}
+				
+			}
 		}
-
+		finally
+		{
+			object.close();	
+		}
   		return item;
           
           
@@ -252,6 +258,10 @@ public class S3Repository extends FileRepository
 			 }
 			 
 			 return item;
+		}
+		catch( ConnectionPoolTimeoutException ex)
+		{
+			
 		}
 		catch(AmazonServiceException ex )
 		{
