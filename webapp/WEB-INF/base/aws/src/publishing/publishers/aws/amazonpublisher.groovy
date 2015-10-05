@@ -1,4 +1,4 @@
-package publishing.publishers;
+package publishing.publishers.aws;
 
 import model.amazon.S3Repository
 
@@ -11,6 +11,8 @@ import org.openedit.entermedia.publishing.PublishResult
 import org.openedit.entermedia.publishing.Publisher
 import org.openedit.repository.filesystem.StringItem
 
+import publishing.publishers.basepublisher
+
 import com.openedit.page.Page
 
 public class amazonpublisher extends basepublisher implements Publisher 
@@ -19,7 +21,7 @@ public class amazonpublisher extends basepublisher implements Publisher
 
 	public PublishResult publish(MediaArchive mediaArchive,Asset asset, Data inPublishRequest,  Data destination, Data inPreset)
 	{
-		S3Repository repo = (S3Repository)mediaArchive.getModuleManager().getBean("S3Repository");
+		def repo = mediaArchive.getModuleManager().getBean("S3Repository");
 		log.info("Publish asset to Amazon ${asset} for on server: ${destination}" );
 
 		repo.setBucket(destination.bucket);
@@ -34,7 +36,7 @@ public class amazonpublisher extends basepublisher implements Publisher
 		{
 			exportname = "/" + exportname;
 		}
-		StringItem item = new StringItem();
+		FileItem item = new FileItem();
 		item.setPath( exportname);
 		item.setAbsolutePath(inputpage.getContentItem().getAbsolutePath());
 

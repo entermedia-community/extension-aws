@@ -14,6 +14,9 @@ http://www.springframework.org/schema/lang http://www.springframework.org/schema
 <lang:groovy id="S3Repository" script-source="model/amazon/S3Repository.groovy" singleton="false">
 </lang:groovy>
 
+<lang:groovy id="amazonpublisher" script-source="publishing/publishers/aws/amazonpublisher.groovy" />
+
+
 <!-- 
 Configure the repo in oemounts.xml
 
@@ -33,7 +36,6 @@ Configure the repo in oemounts.xml
 </bean>
  	
 
-<lang:groovy id="amazonpublisher" script-source="publishing/publishers/amazonpublisher.groovy" />
 
 
 

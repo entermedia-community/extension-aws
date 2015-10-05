@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="tests"/>
-	<classpathentry kind="src" path="webapp/WEB-INF/base/aws/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/entermedia-server"/>
 	<classpathentry exported="true" kind="con" path="GROOVY_SUPPORT"/>
 	<classpathentry exported="true" kind="con" path="GROOVY_DSL_SUPPORT"/>
 	<classpathentry kind="lib" path="lib/httpcore-4.2.jar"/>
-	<classpathentry kind="lib" path="/home/shanti/git/aws-java-sdk-1.8.3/third-party/jackson-core-2.1/jackson-core-2.1.1.jar"/>
-	<classpathentry kind="lib" path="/home/shanti/git/aws-java-sdk-1.8.3/third-party/jackson-databind-2.1/jackson-databind-2.1.1.jar"/>
-	<classpathentry kind="lib" path="/home/shanti/git/aws-java-sdk-1.8.3/third-party/jackson-annotations-2.1/jackson-annotations-2.1.1.jar"/>
-	<classpathentry kind="lib" path="/home/shanti/git/aws-java-sdk-1.8.3/third-party/joda-time-2.2/joda-time-2.2.jar"/>
-	<classpathentry kind="lib" path="lib/aws-java-sdk-1.5.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="/home/shanti/git/aws-java-sdk-1.8.3/third-party/jackson-core-2.1/jackson-core-2.1.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/home/shanti/git/aws-java-sdk-1.8.3/third-party/jackson-databind-2.1/jackson-databind-2.1.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/home/shanti/git/aws-java-sdk-1.8.3/third-party/jackson-annotations-2.1/jackson-annotations-2.1.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/home/shanti/git/aws-java-sdk-1.8.3/third-party/joda-time-2.2/joda-time-2.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/aws-java-sdk-1.5.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
