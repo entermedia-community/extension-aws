@@ -26,7 +26,7 @@
 		<mkdir dir="${build}" />
 		<zip destfile="${build}/${versionedApp}.zip">
 			<zipfileset dir="${webapp}/WEB-INF/base/aws" prefix="WEB-INF/base/aws" />
-			<zipfileset dir="${webapp}/WEB-INF/lib" prefix="WEB-INF/lib" />
+			<zipfileset dir="${basedir}/lib" prefix="WEB-INF/lib" />
 		</zip>
 	</target>
 
