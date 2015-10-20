@@ -1,11 +1,11 @@
 importPackage( Packages.com.openedit.util );
 importPackage( Packages.java.util );
 importPackage( Packages.java.lang );
-importPackage( Packages.java.io );
 importPackage( Packages.com.openedit.modules.update );
-importPackage( Packages.com.openedit.modules.scheduler );
 
-var war = "http://dev.entermediasoftware.com/jenkins/job/@BRANCH@entermedia-server/lastSuccessfulBuild/artifact/deploy/ROOT.war";
+var name = "extension-aws";
+
+var war = "http://dev.entermediasoftware.com/jenkins/job/@BRANCH@" + name + "/lastSuccessfulBuild/artifact/deploy/" + name + ".zip";
 
 var root = moduleManager.getBean("root").getAbsolutePath();
 var web = root + "/WEB-INF";
@@ -13,77 +13,18 @@ var tmp = web + "/tmp";
 
 log.add("1. GET THE LATEST WAR FILE");
 var downloader = new Downloader();
-downloader.download( war, tmp + "/ROOT.war");
+downloader.download( war, tmp + "/" + name + ".zip");
 
 log.add("2. UNZIP WAR FILE");
 var unziper = new ZipUtil();
-unziper.unzip(  tmp + "/ROOT.war",  tmp );
+unziper.unzip(  tmp + "/" + name + ".zip",  tmp + "/unzip/" );
 
+log.add("3. Copy Over Site " + tmp + "/unzip/" + " " + "to " + root);
 var files = new FileUtils();
 
-log.add("3. UPGRADE BASE DIR");
-files.deleteAll( root + "/WEB-INF/base/manager");
-files.deleteAll( root + "/WEB-INF/base/entermedia");
-files.deleteAll( root + "/WEB-INF/base/emfrontend");
-files.deleteAll( root + "/WEB-INF/base/modulefrontend");
-files.deleteAll( root + "/WEB-INF/base/system");
-files.deleteAll( root + "/WEB-INF/base/themes/baseem");
-
-files.copyFiles( tmp + "/WEB-INF/base/entermedia", root + "/WEB-INF/base/entermedia");
-files.copyFiles( tmp + "/WEB-INF/base/manager", root + "/WEB-INF/base/manager");
-files.copyFiles( tmp + "/WEB-INF/base/emfrontend", root + "/WEB-INF/base/emfrontend");
-files.copyFiles( tmp + "/WEB-INF/base/modulefrontend", root + "/WEB-INF/base/modulefrontend");
-files.copyFiles( tmp + "/WEB-INF/base/system", root + "/WEB-INF/base/system");
-files.copyFiles( tmp + "/WEB-INF/base/themes/baseem", root + "/WEB-INF/base/themes/baseem");
-files.copyFiles( tmp + "/WEB-INF/base/themes/rational", root + "/WEB-INF/base/themes/rational");
-
-log.add("4. REPLACE LIBS");
-files.deleteMatch( web + "/lib/dev_entermedia-server*.jar");
-files.deleteMatch( web + "/lib/dev_entermedia-5*.jar");
-files.deleteMatch( web + "/lib/dev_entermedia-8*.jar");
-
-files.deleteMatch( web + "/lib/entermedia-server*.jar");
-files.deleteMatch( web + "/lib/entermedia-5*.jar");
-files.deleteMatch( web + "/lib/entermedia-7*.jar");
-files.deleteMatch( web + "/lib/entermedia-8*.jar");
-
-
-files.deleteMatch( web + "/lib/groovy-*.jar");
-files.deleteMatch( web + "/lib/aws-*.jar");
-files.deleteMatch( web + "/lib/gson-*.jar");
-files.deleteMatch( web + "/lib/mp4parser*.jar");
-files.deleteMatch( web + "/lib/PDFBox*.jar");
-files.deleteMatch( web + "/lib/lucene*.jar");
-files.deleteMatch( web + "/lib/spring-*.jar");
-files.deleteMatch( web + "/lib/aopalliance-*.jar");
-files.deleteMatch( web + "/lib/jaxen-*.jar");
-files.deleteMatch( web + "/lib/commons-codec*.jar");
-files.deleteMatch( web + "/lib/guava-*.jar");
-files.deleteMatch( web + "/lib/velocity-tools*.jar");
-files.deleteMatch( web + "/lib/http*.jar");
-
-files.deleteMatch( web + "/lib/json-simple*.jar");
-
-
-/*
-files.copyFileByMatch( tmp + "/WEB-INF/lib/entermedia*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/dev_entermedia*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/groovy-*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/aws-*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/gson-*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/mp4parser-*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/PDFBox*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/lucene*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/commons-net-*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/spring-*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/aopalliance-*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/jaxen-*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/commons-codec*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/guava*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/velocity-tools*.jar", web + "/lib/");
-*/
-files.copyFileByMatch( tmp + "/WEB-INF/lib/*.jar", web + "/lib/");
-
+files.copyFiles( tmp + "/unzip", root);
 
 log.add("5. CLEAN UP");
 files.deleteAll(tmp);
+
+log.add("6. UPGRADE COMPLETED");

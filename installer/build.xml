@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="../" default="default" name="extension-aws">
+
+  	<target name="default" depends="clean, zip"/>
+  	<target name="dependency" depends="default"/>
+   
+    <property name="appname" value="${ant.project.name}"/>
+    <property name="org" value="EnterMedia, Inc."/>
+	<property name="etc" location="${basedir}/etc"/>
+	
+    <property name="build" location="${basedir}/build"/>
+    <property name="webapp" location="${basedir}/webapp"/>
+
+    <property name="base" location="${basedir}/webapp/WEB-INF/base"/>
+
+	<!-- 
+		========================================================================
+		Anthill build server properties.  These properties will be passed in
+		by anthill when this script is executed on the build server.
+		
+			- "version" is set by the version adapter
+			- "deployDir" is set by anthill.publish.dir
+		========================================================================
+	--> 
+  	<property name="version"  value="8.${env.BUILD_NUMBER}"/>
+  	<property name="deployDir" location="${basedir}/deploy"/>
+  	
+  	<!-- A convenience variable for documentation output -->
+
+	<target name="clean">
+	 <delete dir="${build}"/>
+	</target>
+
+	<target name="zip" >
+		<mkdir dir="${deployDir}"/>
+		<zip destfile="${deployDir}/${appname}.zip" >			
+			<zipfileset dir="${base}/aws" prefix="WEB-INF/base/aws" />
+			<zipfileset dir="${basedir}/installer" prefix="etc" includes="install.js" />
+		</zip>
+ </target>
+  
+ 
+</project>

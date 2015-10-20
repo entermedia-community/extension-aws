@@ -7,3 +7,5 @@
 /webapp/WEB-INF/data/*index/*
 /webapp/WEB-INF/data/*
 /webapp/WEB-INF/logs/*
+/webapp/WEB-INF/s3cache
+webapp/WEB-INF/base/entermedia

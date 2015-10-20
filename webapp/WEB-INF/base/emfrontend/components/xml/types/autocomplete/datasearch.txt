@@ -1,8 +1,0 @@
-{"rows": [
-	#foreach ($res in $autocomplete.getPageOfHits())
-	#if( $velocityCount > 1 ),#end
-	#set($label = $searcherManager.getLabel($searcher,$res))
-	{"id": "$res.get('id')", "name": "$label", "sourcepath" : "$res.sourcepath"}
-	#end
-	]
-}
