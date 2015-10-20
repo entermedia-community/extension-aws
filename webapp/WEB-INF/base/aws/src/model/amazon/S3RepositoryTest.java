@@ -43,14 +43,14 @@ public class S3RepositoryTest extends BaseEnterMediaTest
 		repo.setExternalPath(getRoot().getAbsolutePath() + "/WEB-INF/s3cache" );
 		repo.setPath("/WEB-INF/data/test/originals/bucket1");
 		repo.setBucket("entermedia-test2");
-		repo.setAccessKey("AKIAIQLUUB4Q5ELXXX");
-		repo.setSecretKey("WE/JYEIiJ3cgPsRYGqNbNPPno6M2UWI/XXXX");
+		repo.setAccessKey("AKIAJE2NDJOL64WR3HEA");
+		repo.setSecretKey("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");
 		
 		
 		return repo;
 	}
 	
-	public void testListing() throws Exception
+	public void XtestListing() throws Exception
 	{
 		//requires a mount to be setup in oemounts.xml
 		MediaArchive archive = getMediaArchive();

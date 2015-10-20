@@ -363,37 +363,46 @@ public class S3Repository extends FileRepository
 		
 		//Should I save a copy to the local cache sure?
 		String awspath = trimAwsPath(inContent.getPath());
-		String root = getExternalPath() + "/" + awspath;
-		
-		File cached = new File(root);
-
-		InputStream input = inContent.getInputStream();
-		cached.getParentFile().mkdirs();
-		OutputStream output = null;
-		try
+		File localfile = null;
+		if( getExternalPath() != null && !(inContent instanceof FileItem))
 		{
-			output = new FileOutputStream(cached);
-			log.info("Saving Local file to cache " + awspath);
-			getOutputFiller().fill( input, output );
+			String root = getExternalPath() + "/" + awspath;
+			
+			//We need a file and we need to store it on a temporary basis
+			localfile = new File(root);
+			InputStream input = inContent.getInputStream();
+			localfile.getParentFile().mkdirs();
+			OutputStream output = null;
+			try
+			{
+				output = new FileOutputStream(localfile);
+				log.info("Saving Local file to cache " + awspath);
+				getOutputFiller().fill( input, output );
+			}
+			catch( IOException ex)
+			{
+				throw new OpenEditException(ex);
+			}
+			finally
+			{
+				getOutputFiller().close(input);
+				getOutputFiller().close(output);
+			}
 		}
-		catch( IOException ex)
+		else
 		{
-			throw new OpenEditException(ex);
-		}
-		finally
-		{
-			getOutputFiller().close(input);
-			getOutputFiller().close(output);
+			localfile = ((FileItem)inContent).getFile();
 		}
 		
 		///PutObjectRequest req = new PutObjectRequest(getBucket(), awspath, cached);
-		getConnection().putObject(getBucket(), awspath, cached);
-		log.info("Uploaded from cache to S3" + awspath);
+		log.info("${getBucket()} | ${awspath} | ${localfile}");
+		getConnection().putObject(getBucket(), awspath, localfile);
+		log.info("Uploaded from cache to S3 " + awspath);
 		
 		ObjectMetadata data = getConnection().getObjectMetadata( new GetObjectMetadataRequest(getBucket(), awspath));
 		if( data.getLastModified() != null)
 		{
-			cached.setLastModified(data.getLastModified().getTime());
+			localfile.setLastModified(data.getLastModified().getTime());
 		}
 		
 	}
