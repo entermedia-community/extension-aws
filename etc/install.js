@@ -21,7 +21,10 @@ unziper.unzip(  tmp + "/" + name + ".zip",  tmp + "/unzip/" );
 
 log.add("3. Copy Over Site " + tmp + "/unzip/" + " " + "to " + root);
 var files = new FileUtils();
-
+files.deleteMatch( web + "/lib/@BRANCH@extension-aws*.jar");
+files.deleteMatch( web + "/lib/aws-java*.jar");
+files.deleteMatch( web + "/lib/jackson*.jar");
+files.deleteMatch( web + "/lib/joda*.jar");
 files.copyFiles( tmp + "/unzip", root);
 
 log.add("5. CLEAN UP");
