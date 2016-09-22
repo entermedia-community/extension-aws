@@ -1,34 +1,40 @@
-package model.amazon;
+package org.entermediadb.amazon;
 
-import javax.mail.internet.CachedDataHandler;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
-import org.apache.http.conn.ConnectionPoolTimeoutException;
-import org.openedit.repository.BaseRepository
-import org.openedit.repository.ContentItem
-import org.openedit.repository.Repository
-import org.openedit.repository.RepositoryException
-import org.openedit.repository.filesystem.FileItem
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.openedit.OpenEditException;
+import org.openedit.repository.ContentItem;
+import org.openedit.repository.Repository;
+import org.openedit.repository.RepositoryException;
+import org.openedit.repository.filesystem.FileItem;
 import org.openedit.repository.filesystem.FileRepository;
+import org.openedit.util.OutputFiller;
 
-import com.amazonaws.AmazonServiceException
-import com.amazonaws.ClientConfiguration
-import com.amazonaws.Protocol
-import com.amazonaws.auth.BasicAWSCredentials
-import com.amazonaws.services.s3.AmazonS3
-import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model.GetObjectMetadataRequest
-import com.amazonaws.services.s3.model.GetObjectRequest
-import com.amazonaws.services.s3.model.ListObjectsRequest
-import com.amazonaws.services.s3.model.ObjectListing
-import com.amazonaws.services.s3.model.ObjectMetadata
-import com.amazonaws.services.s3.model.PutObjectRequest
-import com.amazonaws.services.s3.model.PutObjectResult;
-import com.amazonaws.services.s3.model.S3Object
-import com.amazonaws.services.s3.model.S3ObjectSummary
-import com.openedit.OpenEditException
-import com.openedit.util.OutputFiller
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.Protocol;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+
 
 public class S3Repository extends FileRepository
 {
@@ -201,9 +207,19 @@ public class S3Repository extends FileRepository
 				
 			}
 		}
+		
+		catch(Exception e){
+			throw new OpenEditException(e);
+		}
 		finally
 		{
-			object.close();	
+			try{
+				object.close();	
+			}
+			catch(Exception e){
+				throw new OpenEditException(e);
+			}
+				
 		}
   		return item;
           
@@ -259,10 +275,7 @@ public class S3Repository extends FileRepository
 			 
 			 return item;
 		}
-		catch( ConnectionPoolTimeoutException ex)
-		{
-			
-		}
+		
 		catch(AmazonServiceException ex )
 		{
 			if( ex.getStatusCode()  == 404)
@@ -324,39 +337,48 @@ public class S3Repository extends FileRepository
 
 	public void move(ContentItem inSource,ContentItem inDest) throws RepositoryException 
 	{
-		if( inSource instanceof S3ContentItem)
+		try
 		{
-			//move using their API
-			throw new RepositoryException("Repo moves not supported");
+			if( inSource instanceof S3ContentItem)
+			{
+				//move using their API
+				throw new RepositoryException("Repo moves not supported");
+			}
+			String awspath = trimAwsPath(inDest.getPath());
+			String root = getExternalPath() + "/" + awspath;
+			
+			File source = new File(inSource.getAbsolutePath());
+			File destination = new File(root);
+			
+			
+			if ( !source.renameTo(destination))
+			{
+				getFileUtils().copyFiles( source, destination );
+				getFileUtils().deleteAll(source);
+			}
+			log.info("Moved cache file to s3 " +awspath);
+			//PutObjectRequest req = new PutObjectRequest(getBucket(), awspath, destination);
+			getConnection().putObject(getBucket(), awspath, destination);
+			
+			ObjectMetadata data = getConnection().getObjectMetadata( new GetObjectMetadataRequest(getBucket(), awspath));
+			 if( data.getLastModified() != null)
+			 {
+				 destination.setLastModified(data.getLastModified().getTime());
+			 }
+			 if( inDest instanceof S3ContentItem)
+			 {
+				 S3ContentItem ci = (S3ContentItem)inDest;
+				 ci.existed = null;
+				 ci.folder = null;
+				 ci.setFile(destination);
+			 }
 		}
-		String awspath = trimAwsPath(inDest.getPath());
-		String root = getExternalPath() + "/" + awspath;
-		
-		File source = new File(inSource.getAbsolutePath());
-		File destination = new File(root);
-		
-		
-		if ( !source.renameTo(root))
+		catch (Exception e)
 		{
-			getFileUtils().copyFiles( source, destination );
-			getFileUtils().deleteAll(source);
+			// TODO Auto-generated catch block
+		throw new OpenEditException(e);
 		}
-		log.info("Moved cache file to s3 " +awspath);
-		//PutObjectRequest req = new PutObjectRequest(getBucket(), awspath, destination);
-		getConnection().putObject(getBucket(), awspath, destination);
 		
-		ObjectMetadata data = getConnection().getObjectMetadata( new GetObjectMetadataRequest(getBucket(), awspath));
-		 if( data.getLastModified() != null)
-		 {
-			 destination.setLastModified(data.getLastModified().getTime());
-		 }
-		 if( inDest instanceof S3ContentItem)
-		 {
-			 S3ContentItem ci = (S3ContentItem)inDest;
-			 ci.existed = null;
-			 ci.folder = null;
-			 ci.setFile(destination);
-		 }
 	}
 	
 	public void put(ContentItem inContent) throws RepositoryException {
@@ -410,34 +432,43 @@ public class S3Repository extends FileRepository
 	@Override
 	public void copy(ContentItem inSource, ContentItem inDest) throws RepositoryException {
 		
-		if( inSource instanceof S3ContentItem)
+		try
 		{
-			//move using their API
-			throw new RepositoryException("Repo moves not supported");
+			if( inSource instanceof S3ContentItem)
+			{
+				//move using their API
+				throw new RepositoryException("Repo moves not supported");
+			}
+			String awspath = trimAwsPath(inDest.getPath());
+			String root = getExternalPath() + "/" + awspath;
+			
+			File source = new File(inSource.getAbsolutePath());
+			File destination = new File(root);
+			
+			getFileUtils().copyFiles( source, destination );
+			log.info("Copy to cache file " +awspath);
+			//PutObjectRequest req = new PutObjectRequest(getBucket(), awspath, destination);
+			getConnection().putObject(getBucket(), awspath, destination);
+			
+			ObjectMetadata data = getConnection().getObjectMetadata( new GetObjectMetadataRequest(getBucket(), awspath));
+			 if( data.getLastModified() != null)
+			 {
+				 destination.setLastModified(data.getLastModified().getTime());
+			 }
+			 if( inDest instanceof S3ContentItem)
+			 {
+				 S3ContentItem ci = (S3ContentItem)inDest;
+				 ci.existed = null;
+				 ci.folder = null;
+				 ci.setFile(destination);
+			 }
 		}
-		String awspath = trimAwsPath(inDest.getPath());
-		String root = getExternalPath() + "/" + awspath;
+		catch (Exception e)
+		{
+			// TODO Auto-generated catch block
+			throw new OpenEditException(e);
+		}
 		
-		File source = new File(inSource.getAbsolutePath());
-		File destination = new File(root);
-		
-		getFileUtils().copyFiles( source, destination );
-		log.info("Copy to cache file " +awspath);
-		//PutObjectRequest req = new PutObjectRequest(getBucket(), awspath, destination);
-		getConnection().putObject(getBucket(), awspath, destination);
-		
-		ObjectMetadata data = getConnection().getObjectMetadata( new GetObjectMetadataRequest(getBucket(), awspath));
-		 if( data.getLastModified() != null)
-		 {
-			 destination.setLastModified(data.getLastModified().getTime());
-		 }
-		 if( inDest instanceof S3ContentItem)
-		 {
-			 S3ContentItem ci = (S3ContentItem)inDest;
-			 ci.existed = null;
-			 ci.folder = null;
-			 ci.setFile(destination);
-		 }
 		
 	}
 
@@ -533,63 +564,7 @@ public class S3Repository extends FileRepository
 	}
 
 	
-	class S3ContentItem extends FileItem
-	{
-		protected Boolean existed;
-		protected Boolean folder;
-		protected long length;
-		
-		@Override
-		public long getLength()
-		{
-			if( length > 0)
-			{
-				return length;
-			}
-			return super.getLength();
-		}
-		
-		public boolean exists()
-		{
-			if( existed != null)
-			{
-				return existed;
-			}
-			if( getFile() != null)
-			{
-				return getFile().exists();
-			}
-			return true;
-		}
-
-		public boolean isFolder()
-		{
-			if( folder != null)
-			{
-				return folder;
-			}
-			if( getFile() != null)
-			{
-				return getFile().isDirectory();
-			}
-			if (getPath().endsWith("/"))
-			{
-				return true;
-			}
-			return false;
-		}
-
-		public void setLastModified(Date inDate)
-		{
-			fieldLastModified = inDate;
-		}
-		
-		public String toString()
-		{
-			return getName();
-		}
-		
-	}
+	
 
 
 	public URL getPresignedURL(String inString, Date expiration) {

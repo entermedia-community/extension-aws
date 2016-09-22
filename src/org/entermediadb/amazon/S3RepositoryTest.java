@@ -1,12 +1,11 @@
-package model.amazon;
+package org.entermediadb.amazon;
 
 import java.util.List;
 
-import org.openedit.entermedia.BaseEnterMediaTest;
-import org.openedit.entermedia.MediaArchive;
+import org.entermediadb.asset.BaseEnterMediaTest;
+import org.entermediadb.asset.MediaArchive;
+import org.openedit.page.Page;
 import org.openedit.repository.ContentItem;
-
-import com.openedit.page.Page;
 
 public class S3RepositoryTest extends BaseEnterMediaTest
 {
@@ -14,37 +13,14 @@ public class S3RepositoryTest extends BaseEnterMediaTest
 	
 	public S3Repository getRepo()
 	{
-		//MediaArchive archive = getMediaArchive();
-
-//		
-//		X509TrustManager tm = new X509TrustManager() {
-//			 
-//			public void checkClientTrusted(X509Certificate[] xcs, String string) throws CertificateException {
-//			}
-//			 
-//			public void checkServerTrusted(X509Certificate[] xcs, String string) throws CertificateException {
-//			}
-//			 
-//			public X509Certificate[] getAcceptedIssuers() {
-//			return null;
-//			}
-//			};
 		
-		//Object obj = archive.getModuleManager().getBean(archive.getCatalogId(), "S3Repository");;
-//		System.out.println( obj.class );
-//		System.out.println( S3Repository.getClass() );
-//		
-		
-		
-		
-//		Repository brepo = (Repository)obj;
 		S3Repository repo =  new S3Repository(); 
 		//repo.setRoot(getRoot());
 		repo.setExternalPath(getRoot().getAbsolutePath() + "/WEB-INF/s3cache" );
 		repo.setPath("/WEB-INF/data/test/originals/bucket1");
-		repo.setBucket("entermedia-test2");
-		repo.setAccessKey("XAKIAJE2NDJOL64XXXXX");
-		repo.setSecretKey("XuccOTK07Wr0aqZufTwE2VcyeHPsf+mJtc2XXXX");
+		repo.setBucket("entermedia9");
+		repo.setAccessKey("AKIAIWDXNUBEOPD626WQ");
+		repo.setSecretKey("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");
 		
 		
 		return repo;
