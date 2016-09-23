@@ -16,8 +16,8 @@
     <property name="wardir" location="${build}/wartmp"/>
     <property name="webapp" location="${basedir}/webapp"/>
 	<property name="webinf" location="${webapp}/WEB-INF"/>
-	<property name="branch" value="" />
-				<property name="majorversion" value="7" />
+	<property name="branch" value="em9_" />
+				<property name="majorversion" value="9" />
 
 	<!-- 
 		========================================================================
