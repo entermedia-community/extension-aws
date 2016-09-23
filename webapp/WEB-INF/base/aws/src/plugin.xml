@@ -1,7 +1,7 @@
 <beans>
 
 
-<bean id="S3Repository" class="org.entermediadb.S3Repository" singleton="false">
+<bean id="S3Repository" class="org.entermediadb.amazon.S3Repository" singleton="false">
 </bean>
  	
 
