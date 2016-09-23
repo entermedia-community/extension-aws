@@ -39,7 +39,13 @@ files.deleteMatch( web + "/lib/extension-aws*.jar");
 
 
 files.copyFileByMatch( tmp + "/lib/@BRANCH@extension-aws*.jar", web + "/lib/");
+files.copyFileByMatch( tmp + "/WEB-INF/lib/aws-java*.jar", web + "/lib/");
+files.copyFileByMatch( tmp + "/WEB-INF/lib/jackson*.jar", web + "/lib/");
+files.copyFileByMatch( tmp + "/WEB-INF/lib/joda*.jar", web + "/lib/");
+files.copyFileByMatch( tmp + "/WEB-INF/lib/aws*.jar", web + "/lib/");
 
+files.deleteMatch( web + "/WEB-INF/base/aws/")
+files.copyFileByMatch( tmp + "/base/aws/", root + "/WEB-INF/base/aws/");
 
 
 
