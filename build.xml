@@ -103,7 +103,7 @@
 			<zipfileset dir="${lib}" prefix="lib" excludes="compile/**"/>
 			
 			<zipfileset dir="${deployDir}/builds/" includes="${branch}${appname}-${version}.jar" prefix="lib"/>
-			<zipfileset dir="${webapp}/openedit" prefix="base/openedit" />
+			<zipfileset dir="${webapp}/aws" prefix="base/aws" />
 
 		</zip>
   </target>
