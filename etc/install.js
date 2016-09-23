@@ -28,6 +28,17 @@ files.deleteMatch( web + "/lib/joda*.jar");
 files.deleteMatch( web + "/base/aws*.jar");
 files.copyFiles( tmp + "/unzip", root);
 
+
+files.deleteMatch( web + "/lib/dev_extension-aws*.jar");
+files.deleteMatch( web + "/lib/extension-aws*.jar");
+
+
+
+files.copyFileByMatch( tmp + "/lib/@BRANCH@extension-aws*.jar", web + "/lib/");
+
+
+
+
 log.add("5. CLEAN UP");
 files.deleteAll(tmp);
 
