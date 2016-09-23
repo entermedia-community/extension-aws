@@ -16,12 +16,17 @@ var web = root + "/WEB-INF";
 var tmp = web + "/tmp";
 
 log.info("1. GET THE LATEST WAR FILE");
+
+
+
+log.info("1. GET THE LATEST WAR FILE");
 var downloader = new Downloader();
-downloader.download( war, tmp + "/" + name + ".zip");
+downloader.download( war, tmp + "/extension-aws.zip");
 
 log.info("2. UNZIP WAR FILE");
 var unziper = new ZipUtil();
-unziper.unzip(  tmp + "/" + name + ".zip",  tmp + "/unzip/" );
+unziper.unzip(  tmp + "/extension-aws.zip",  tmp );
+
 
 log.info("3. Copy Over Site " + tmp + "/unzip/" + " " + "to " + root);
 var files = new FileUtils();
