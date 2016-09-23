@@ -47,6 +47,6 @@ files.copyFileByMatch( tmp + "/base/aws/", root + "/WEB-INF/base/aws/");
 
 
 log.info("5. CLEAN UP");
-files.deleteAll(tmp);
+//files.deleteAll(tmp);
 
 log.info("6. UPGRADE COMPLETED");
