@@ -40,11 +40,11 @@ files.deleteMatch( web + "/lib/extension-aws*.jar");
 
 
 
-files.copyFileByMatch( tmp + "/lib/@BRANCH@extension-aws*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/aws-java*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/jackson*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/joda*.jar", web + "/lib/");
-files.copyFileByMatch( tmp + "/WEB-INF/lib/aws*.jar", web + "/lib/");
+files.copyFileByMatch( tmp + "/lib/*extension-aws*.jar", web + "/lib/");
+files.copyFileByMatch( tmp + "/lib/aws-java*.jar", web + "/lib/");
+files.copyFileByMatch( tmp + "/lib/jackson*.jar", web + "/lib/");
+files.copyFileByMatch( tmp + "/lib/joda*.jar", web + "/lib/");
+files.copyFileByMatch( tmp + "/lib/aws*.jar", web + "/lib/");
 
 files.deleteMatch( web + "/WEB-INF/base/aws/")
 files.copyFileByMatch( tmp + "/base/aws/", root + "/WEB-INF/base/aws/");
@@ -52,6 +52,6 @@ files.copyFileByMatch( tmp + "/base/aws/", root + "/WEB-INF/base/aws/");
 
 
 log.info("5. CLEAN UP");
-//files.deleteAll(tmp);
+files.deleteAll(tmp);
 
 log.info("6. UPGRADE COMPLETED");
