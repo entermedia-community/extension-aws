@@ -172,7 +172,7 @@
 		  
 			<!-- publish results to anthill -->
 		 	<copy file="${deployDir}/builds/extension-aws.zip" overwrite="true"
-		        tofile="${deployDir}/extension-openedit.zip"/>
+		        tofile="${deployDir}/extension-aws.zip"/>
 			<copy overwrite="true"  file="${etc}/install.js" 
 				    tofile="${deployDir}/install.js">
 				 		 <filterset>
