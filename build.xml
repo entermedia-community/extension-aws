@@ -16,7 +16,7 @@
     <property name="wardir" location="${build}/wartmp"/>
     <property name="webapp" location="${basedir}/webapp"/>
 	<property name="webinf" location="${webapp}/WEB-INF"/>
-	<property name="branch" value="em9_" />
+	<property name="branch" value="em9" />
 				<property name="majorversion" value="9" />
 
 	<!-- 
@@ -185,7 +185,18 @@
 				 		      <filter token="BRANCH" value="${branch}"/>
 						 		    </filterset>
 			 		</copy>
-
+			<copy file="${etc}/awsextension.xml" overwrite="true"
+					        tofile="${deployDir}/awsextension.xml">
+					 <filterset>
+					      <filter token="BRANCH" value="${branch}"/>
+				    </filterset>
+			</copy>
+		<copy file="${etc}/awsextension-full.xml" overwrite="true"
+						        tofile="${deployDir}/awsextension-full.xml">
+						 <filterset>
+						      <filter token="BRANCH" value="${branch}"/>
+					    </filterset>
+				</copy>
 			
 		</target>
 	  
