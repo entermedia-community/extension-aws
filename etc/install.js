@@ -30,7 +30,7 @@ unziper.unzip(  tmp + "/extension-aws.zip",  tmp );
 
 log.info("3. Copy Over Site " + tmp + "/unzip/" + " " + "to " + root);
 var files = new FileUtils();
-files.deleteMatch( web + "/lib/@BRANCH@extension-aws*.jar");
+files.deleteMatch( web + "/lib/*extension-aws*.jar");
 files.deleteMatch( web + "/lib/aws-java*.jar");
 files.deleteMatch( web + "/lib/jackson-databind*.jar");
 files.deleteMatch( web + "/lib/jackson-annotations*.jar");
@@ -41,7 +41,7 @@ files.deleteMatch( web + "/lib/extension-aws*.jar");
 
 
 
-files.copyFileByMatch( tmp + "/lib/*extension-aws*.jar", web + "/lib/");
+files.copyFileByMatch( tmp + "/lib/@BRANCH@extension-aws*.jar", web + "/lib/");
 files.copyFileByMatch( tmp + "/lib/aws-java*.jar", web + "/lib/");
 files.copyFileByMatch( tmp + "/lib/jackson-databind*.jar", web + "/lib/");
 files.copyFileByMatch( tmp + "/lib/jackson-annotations*.jar", web + "/lib/");
