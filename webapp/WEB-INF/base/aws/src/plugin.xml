@@ -5,6 +5,15 @@
 </bean>
  	
 
+<bean id="S3Connection" class="org.entermediadb.amazon.S3Connection" singleton="false">
+		<property name="moduleManager"><ref bean="moduleManager"/></property>
+
+</bean>
+
+<bean id="S3PushManager" class="org.entermediadb.amazon.S3PushManager" singleton="true">
+</bean>
+
+
 
 </beans>
 

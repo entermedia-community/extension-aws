@@ -11,6 +11,7 @@ import org.entermediadb.asset.Asset;
 import org.entermediadb.asset.MediaArchive;
 import org.entermediadb.asset.push.PushManager;
 import org.openedit.Data;
+import org.openedit.data.Searcher;
 import org.openedit.repository.ContentItem;
 import org.openedit.users.User;
 import org.openedit.util.DateStorageUtil;
@@ -40,7 +41,7 @@ public class S3PushManager extends BasePushManager implements PushManager {
 	public void pushAssets(MediaArchive inArchive, List<Asset> inAssetsSaved) {
 		S3Connection connection = (S3Connection) inArchive.getBean("S3Connection");
 		List tosave = new ArrayList();
-
+		Searcher searcher = inArchive.getAssetSearcher();
 		for (Iterator iterator = inAssetsSaved.iterator(); iterator.hasNext();) {
 			Asset asset = (Asset) iterator.next();
 			tosave.add(asset);
@@ -76,17 +77,22 @@ public class S3PushManager extends BasePushManager implements PushManager {
 						String filepath = inArchive.getAssetImporter().getAssetUtilities()
 								.createSourcePathFromMask(inArchive, null, asset.getMediaName(), generatedmask, map);
 						String path = "/WEB-INF/data/" + inArchive.getCatalogId() + "/generated/" + asset.getSourcePath()
-								+ "/" + preset.get("outputfile");
+								+ "/" + preset.get("generatedoutputfile");
 						ContentItem item = inArchive.getContent(path);
 						connection.put(filepath, item);
 
 					}
 
 				}
+				
 				asset.setValue("pusheddate", DateStorageUtil.getStorageUtil().formatForStorage(new Date()));
+				saveAssetStatus(searcher, tosave, asset, "complete", null);
 
 			} catch (Exception e) {
+				
 				asset.setValue("pusherrordetails", e.toString());
+				saveAssetStatus(searcher, tosave, asset, "error", null);
+
 			}
 
 

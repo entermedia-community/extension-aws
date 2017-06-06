@@ -7,10 +7,7 @@ import org.apache.commons.logging.LogFactory;
 import org.entermediadb.asset.MediaArchive;
 import org.openedit.ModuleManager;
 import org.openedit.repository.ContentItem;
-import org.openedit.repository.RepositoryException;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -27,15 +24,21 @@ public class S3Connection
 	
 	protected AmazonS3 fieldConnection;
 	protected String fieldCatalogId;
-	protected MediaArchive fieldMediaArchive;
 	
-	public MediaArchive getMediaArchive() {
-		return fieldMediaArchive;
+	
+	public String getCatalogId() {
+		return fieldCatalogId;
 	}
 
-	public void setMediaArchive(MediaArchive fieldMediaArchive) {
-		this.fieldMediaArchive = fieldMediaArchive;
+	public void setCatalogId(String inCatalogId) {
+		fieldCatalogId = inCatalogId;
 	}
+
+	public MediaArchive getMediaArchive() {
+		return (MediaArchive) getModuleManager().getBean(getCatalogId(), "mediaArchive");
+	}
+
+	
 
 	public ModuleManager getModuleManager() {
 		return fieldModuleManager;
@@ -136,7 +139,7 @@ public class S3Connection
 		//Should I save a copy to the local cache sure?
 		
 		File localfile = new File(inContent.getAbsolutePath());
-		log.info("${getBucket()} | ${awspath} | ${localfile}");
+		log.info(getBucket()+ "PAth: " +  awspath );
 		try {
 			getConnection().putObject(getBucket(), awspath, localfile);
 		} catch (Exception e) {
