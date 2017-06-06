@@ -280,8 +280,6 @@ public class S3Repository extends FileRepository
 		{
 			if( ex.getStatusCode()  == 404)
 			{
-				item.folder = false;
-				item.existed = false;
 				log.info("S3 Missing this path " + inPath);
 				return item;
 			}
