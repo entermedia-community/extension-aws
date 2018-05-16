@@ -15,6 +15,9 @@
 
 
 
+<bean id="amazonpublisher" class="org.entermediadb.amazon.amazonpublisher" singleton="true">
+</bean>
+
 </beans>
 
  

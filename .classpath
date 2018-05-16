@@ -6,10 +6,10 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/entermedia-server"/>
 	<classpathentry exported="true" kind="con" path="GROOVY_SUPPORT"/>
 	<classpathentry exported="true" kind="con" path="GROOVY_DSL_SUPPORT"/>
-	<classpathentry kind="lib" path="lib/aws-java-sdk-1.10.27.jar"/>
 	<classpathentry kind="lib" path="lib/joda-time-2.8.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/entermedia-core"/>
 	<classpathentry kind="lib" path="lib/jackson-databind-2.5.3.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-annotations-2.5.3.jar"/>
+	<classpathentry kind="lib" path="lib/aws-java-sdk-1.11.268.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
